@@ -46,12 +46,14 @@ oe.fit(data[categorical_input])
 data[categorical_input] = oe.transform(data[categorical_input])
 print(oe.categories_)
 
+## Drop the data having RestingBP = 0
+data.drop(data[data['RestingBP'] == 0].index, inplace=True)
 
 ## Impute value 0 for cholesterol
-# replace value 0 to NaN for cholesterol
+## replace value 0 to NaN for cholesterol
 data['Cholesterol'].replace(0, np.nan, inplace=True)
 
-# KNN Imputer will only impute NaN values
+## KNN Imputer will only impute NaN values
 imputer = KNNImputer()
 data = pd.DataFrame(imputer.fit_transform(data), columns=data.columns)
 
@@ -72,7 +74,7 @@ mlp.fit(X_train, y_train)
 predictions = mlp.predict(X_test)
 print(confusion_matrix(y_test, predictions))
 print(classification_report(y_test, predictions))
-visualise(mlp)
+# visualise(mlp)
 
 
 
