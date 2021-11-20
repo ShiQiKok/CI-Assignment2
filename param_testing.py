@@ -68,48 +68,88 @@ scaler.fit(X_train)
 X_train = scaler.transform(X_train)
 X_test = scaler.transform(X_test)
 
-mlp = MLPClassifier(hidden_layer_sizes=(5,), max_iter=1000)
-mlp.fit(X_train, y_train)
-predictions = mlp.predict(X_test)
-print(confusion_matrix(y_test, predictions))
-print(classification_report(y_test, predictions))
-# visualise(mlp)
+# ==========================Parameter Optimization ==========================
+from openpyxl import load_workbook
 
-#Test Parameter (HiddenLayerSize & Activation)
-neuron = 11
-tuples = []
-for i in range(1,neuron+1):
-    tuples.append((i,))
-    for j in range(1,neuron+1):
-        tuples.append((i,j))
-activation=["identity", "logistic", "tanh", "relu"]
-
-#Create ExcelSheet
-import xlsxwriter
-workbook = xlsxwriter.Workbook('result(10).xlsx')
-worksheet = workbook.add_worksheet("Results")
-
-worksheet.write('A1', 'Hidden Layer Sizes')
-worksheet.write('B1', 'Activation')
-worksheet.write('C1', 'Average Accuracy')
-
-#Test and write to file
-row = 1
-average = 10
-for t in tuples:
-    for a in activation:
-        averageAccuracy = 0
-        for n in range(average):
-            mlp = MLPClassifier(hidden_layer_sizes=t,activation=a, max_iter=1000)
+def test_one_hidden_layer():    
+    wb = load_workbook(filename="result.xlsx")
+    sheet = wb['1layer']
+    sheet['A1'] = 'Number of Nuerons'
+    sheet['B1'] = 'Average Accuracy (10 iterations)'
+    row = 2
+    for n in range(1, 12):
+        total = 0
+        for iteration in range(10):
+            mlp = MLPClassifier(hidden_layer_sizes=(n,), max_iter=1000)
             mlp.fit(X_train, y_train)
             predictions = mlp.predict(X_test)
-            cr=classification_report(y_test, predictions,output_dict=True)
-            accuracy=round(cr["accuracy"],2)
-            averageAccuracy += accuracy
-        averageAccuracy /= average
-        print("Printing result for activation:{activation} and layer:{layer}\nAverage accuracy:{averageAccuracy}".format(activation=a,layer=t,averageAccuracy=averageAccuracy))
-        worksheet.write(row, 0, str(t))
-        worksheet.write(row, 1, a)
-        worksheet.write(row, 2, round(averageAccuracy,2))
+            cr = classification_report(y_test, predictions,output_dict=True)
+            accuracy = round(cr["accuracy"],2)
+            total += accuracy
+            print(f"layer: 1, neurons: {n}")
+            print(accuracy)
+        average = total / 10
+        cell = sheet.cell(row, 1)
+        cell.value = n
+        cell = sheet.cell(row, 2)
+        cell.value = average
         row += 1
-workbook.close()
+    wb.save(filename="result.xlsx")
+    
+def test_two_hidden_layers():    
+    wb = load_workbook(filename="result.xlsx")
+    sheet = wb['2layers']
+    sheet['A1'] = 'Number of Nuerons'
+    sheet['B1'] = 'Average Accuracy (10 iterations)'
+    row = 2
+    for i in range(1, 12):
+        for j in range(1, 12):
+            total = 0
+            for iteration in range(10):
+                mlp = MLPClassifier(hidden_layer_sizes=(i, j,), max_iter=1000)
+                mlp.fit(X_train, y_train)
+                predictions = mlp.predict(X_test)
+                cr = classification_report(y_test, predictions,output_dict=True)
+                accuracy = round(cr["accuracy"],2)
+                total += accuracy
+                print(f"layer:2, neurons: ({i},{j})")
+                print(accuracy)
+            average = total / 10
+            cell = sheet.cell(row, 1)
+            cell.value = f"{i},{j}"
+            cell = sheet.cell(row, 2)
+            cell.value = average
+            row += 1
+    wb.save(filename="result.xlsx")
+
+def test_activation(sizes=(4,)):
+    wb = load_workbook(filename="result.xlsx")
+    sheet = wb['activation']
+    sheet['A1'] = f'Topology: {sizes}'
+    sheet['A2'] = 'Activation'
+    sheet['B2'] = 'Average Accuracy (10 iterations)'
+    activation=["identity", "logistic", "tanh", "relu"]
+    row = 3
+    for a in activation:
+        total = 0
+        for iteration in range(10):
+            mlp = MLPClassifier(hidden_layer_sizes=sizes, max_iter=1000)
+            mlp.fit(X_train, y_train)
+            predictions = mlp.predict(X_test)
+            cr = classification_report(y_test, predictions,output_dict=True)
+            accuracy = round(cr["accuracy"],2)
+            total += accuracy
+            print(f"activation: {a}, neurons: {sizes}")
+            print(accuracy)
+        average = total / 10
+        cell = sheet.cell(row, 1)
+        cell.value = a
+        cell = sheet.cell(row, 2)
+        cell.value = average
+        row += 1
+    wb.save(filename="result.xlsx")
+    
+
+
+
+
