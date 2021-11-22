@@ -75,24 +75,21 @@ def test_one_hidden_layer():
     wb = load_workbook(filename="result.xlsx")
     sheet = wb['1layer']
     sheet['A1'] = 'Number of Nuerons'
-    sheet['B1'] = 'Average Accuracy (10 iterations)'
+    sheet['B1'] = 'Accuracy'
     row = 2
     for n in range(1, 12):
-        total = 0
-        for iteration in range(10):
-            mlp = MLPClassifier(hidden_layer_sizes=(n,), max_iter=1000)
-            mlp.fit(X_train, y_train)
-            predictions = mlp.predict(X_test)
-            cr = classification_report(y_test, predictions,output_dict=True)
-            accuracy = round(cr["accuracy"],2)
-            total += accuracy
-            print(f"layer: 1, neurons: {n}")
-            print(accuracy)
-        average = total / 10
+        mlp = MLPClassifier(hidden_layer_sizes=(n,), max_iter=1000,random_state=1)
+        mlp.fit(X_train, y_train)
+        predictions = mlp.predict(X_test)
+        cr = classification_report(y_test, predictions,output_dict=True)
+        accuracy = round(cr["accuracy"],2)
+        print(f"layer: 1, neurons: {n}")
+        print(accuracy)
+        # Write to file
         cell = sheet.cell(row, 1)
         cell.value = n
         cell = sheet.cell(row, 2)
-        cell.value = average
+        cell.value = accuracy
         row += 1
     wb.save(filename="result.xlsx")
     
@@ -100,25 +97,22 @@ def test_two_hidden_layers():
     wb = load_workbook(filename="result.xlsx")
     sheet = wb['2layers']
     sheet['A1'] = 'Number of Nuerons'
-    sheet['B1'] = 'Average Accuracy (10 iterations)'
+    sheet['B1'] = 'Accuracy'
     row = 2
     for i in range(1, 12):
         for j in range(1, 12):
-            total = 0
-            for iteration in range(10):
-                mlp = MLPClassifier(hidden_layer_sizes=(i, j,), max_iter=1000)
-                mlp.fit(X_train, y_train)
-                predictions = mlp.predict(X_test)
-                cr = classification_report(y_test, predictions,output_dict=True)
-                accuracy = round(cr["accuracy"],2)
-                total += accuracy
-                print(f"layer:2, neurons: ({i},{j})")
-                print(accuracy)
-            average = total / 10
+            mlp = MLPClassifier(hidden_layer_sizes=(i, j,), max_iter=1000,random_state=1)
+            mlp.fit(X_train, y_train)
+            predictions = mlp.predict(X_test)
+            cr = classification_report(y_test, predictions,output_dict=True)
+            accuracy = round(cr["accuracy"],2)
+            print(f"layer:2, neurons: ({i},{j})")
+            print(accuracy)
+            # Write to file
             cell = sheet.cell(row, 1)
             cell.value = f"{i},{j}"
             cell = sheet.cell(row, 2)
-            cell.value = average
+            cell.value = accuracy
             row += 1
     wb.save(filename="result.xlsx")
 
@@ -127,29 +121,26 @@ def test_activation(sizes=(4,)):
     sheet = wb['activation']
     sheet['A1'] = f'Topology: {sizes}'
     sheet['A2'] = 'Activation'
-    sheet['B2'] = 'Average Accuracy (10 iterations)'
+    sheet['B2'] = 'Accuracy'
     activation=["identity", "logistic", "tanh", "relu"]
     row = 3
     for a in activation:
-        total = 0
-        for iteration in range(10):
-            mlp = MLPClassifier(hidden_layer_sizes=sizes, max_iter=1000)
-            mlp.fit(X_train, y_train)
-            predictions = mlp.predict(X_test)
-            cr = classification_report(y_test, predictions,output_dict=True)
-            accuracy = round(cr["accuracy"],2)
-            total += accuracy
-            print(f"activation: {a}, neurons: {sizes}")
-            print(accuracy)
-        average = total / 10
+        mlp = MLPClassifier(hidden_layer_sizes=sizes, max_iter=1000, activation=a, random_state=1)
+        mlp.fit(X_train, y_train)
+        predictions = mlp.predict(X_test)
+        cr = classification_report(y_test, predictions,output_dict=True)
+        accuracy = round(cr["accuracy"],2)
+        print(f"activation: {a}, neurons: {sizes}")
+        print(accuracy)
+        # Write to file
         cell = sheet.cell(row, 1)
         cell.value = a
         cell = sheet.cell(row, 2)
-        cell.value = average
+        cell.value = accuracy
         row += 1
     wb.save(filename="result.xlsx")
     
-
-
-
+test_one_hidden_layer()
+test_two_hidden_layers()
+test_activation((3,4))
 
