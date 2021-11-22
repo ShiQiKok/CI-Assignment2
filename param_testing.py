@@ -3,7 +3,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.impute import KNNImputer
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.neural_network import MLPClassifier
-from sklearn.metrics import confusion_matrix, classification_report, roc_curve, auc
+from sklearn.metrics import confusion_matrix, classification_report
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -35,18 +35,6 @@ def visualise(mlp):
                 ax.plot([loc_neurons[l][i][0], loc_neurons[l+1][j][0]], [loc_neurons[l][i][1], loc_neurons[l+1][j][1]], 'white', linewidth=((w-weight_range[0])/(weight_range[1]-weight_range[0])*5+0.2)*1.2)
                 ax.plot([loc_neurons[l][i][0], loc_neurons[l+1][j][0]], [loc_neurons[l][i][1], loc_neurons[l+1][j][1]], 'grey', linewidth=(w-weight_range[0])/(weight_range[1]-weight_range[0])*5+0.2)
 
-def plot_ROC(gold_standard, prediction):
-    fpr, tpr, _ = roc_curve(gold_standard, prediction)
-
-    plt.figure()
-    plt.title("ROC Curve")
-    plt.xlabel("False Positive Rate")
-    plt.ylabel("True Positive Rate")
-    plt.plot([0,1], [0,1], linestyle='--', color='black') ## major diagonal
-    plt.plot(fpr, tpr, color='orange', label='area={:.2f}'.format(auc(fpr, tpr)))
-    plt.fill_between(fpr,tpr, 0, facecolor='bisque')
-    plt.legend()
-    plt.show()
 
 data = pd.read_csv('heart.csv')
 categorical_input = ['Sex' , 'ChestPainType', 'RestingECG', 'ExerciseAngina', 'ST_Slope']
@@ -80,16 +68,79 @@ scaler.fit(X_train)
 X_train = scaler.transform(X_train)
 X_test = scaler.transform(X_test)
 
+# ==========================Parameter Optimization ==========================
+from openpyxl import load_workbook
 
-mlp = MLPClassifier(hidden_layer_sizes=(3, 4), activation='relu',max_iter=1000, random_state=1)
-mlp.fit(X_train, y_train)
-predictions = mlp.predict(X_test)
-cm = confusion_matrix(y_test, predictions)
-print(cm)
-print(classification_report(y_test, predictions))
-visualise(mlp)
-plot_ROC(y_test, predictions)
+def test_one_hidden_layer():    
+    wb = load_workbook(filename="result.xlsx")
+    sheet = wb['1layer']
+    sheet['A1'] = 'Number of Nuerons'
+    sheet['B1'] = 'Accuracy'
+    row = 2
+    for n in range(1, 12):
+        mlp = MLPClassifier(hidden_layer_sizes=(n), max_iter=1000,random_state=1)
+        mlp.fit(X_train, y_train)
+        predictions = mlp.predict(X_test)
+        cr = classification_report(y_test, predictions,output_dict=True)
+        accuracy = round(cr["accuracy"],2)
+        print(f"layer: 1, neurons: {n}")
+        print(accuracy)
+        # Write to file
+        cell = sheet.cell(row, 1)
+        cell.value = n
+        cell = sheet.cell(row, 2)
+        cell.value = accuracy
+        row += 1
+    wb.save(filename="result.xlsx")
+    
+def test_two_hidden_layers():    
+    wb = load_workbook(filename="result.xlsx")
+    sheet = wb['2layers']
+    sheet['A1'] = 'Number of Nuerons'
+    sheet['B1'] = 'Accuracy'
+    row = 2
+    for i in range(1, 12):
+        for j in range(1, 12):
+            mlp = MLPClassifier(hidden_layer_sizes=(i, j), max_iter=1000,random_state=1)
+            mlp.fit(X_train, y_train)
+            predictions = mlp.predict(X_test)
+            cr = classification_report(y_test, predictions,output_dict=True)
+            accuracy = round(cr["accuracy"],2)
+            print(f"layer:2, neurons: ({i},{j})")
+            print(accuracy)
+            # Write to file
+            cell = sheet.cell(row, 1)
+            cell.value = f"{i},{j}"
+            cell = sheet.cell(row, 2)
+            cell.value = accuracy
+            row += 1
+    wb.save(filename="result.xlsx")
 
-
-
+def test_activation(sizes=(3,4)):
+    wb = load_workbook(filename="result.xlsx")
+    sheet = wb['activation']
+    sheet['A1'] = f'Topology: {sizes}'
+    sheet['A2'] = 'Activation'
+    sheet['B2'] = 'Accuracy'
+    activation=["identity", "logistic", "tanh", "relu"]
+    row = 3
+    for a in activation:
+        mlp = MLPClassifier(hidden_layer_sizes=sizes, max_iter=1000, activation=a, random_state=1)
+        mlp.fit(X_train, y_train)
+        predictions = mlp.predict(X_test)
+        cr = classification_report(y_test, predictions,output_dict=True)
+        accuracy = round(cr["accuracy"],2)
+        print(f"activation: {a}, neurons: {sizes}")
+        print(accuracy)
+        # Write to file
+        cell = sheet.cell(row, 1)
+        cell.value = a
+        cell = sheet.cell(row, 2)
+        cell.value = accuracy
+        row += 1
+    wb.save(filename="result.xlsx")
+    
+# test_one_hidden_layer()
+# test_two_hidden_layers()
+# test_activation((3,4))
 
