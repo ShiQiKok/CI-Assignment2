@@ -78,7 +78,7 @@ def test_one_hidden_layer():
     sheet['B1'] = 'Accuracy'
     row = 2
     for n in range(1, 12):
-        mlp = MLPClassifier(hidden_layer_sizes=(n,), max_iter=1000,random_state=1)
+        mlp = MLPClassifier(hidden_layer_sizes=(n), max_iter=1000,random_state=1)
         mlp.fit(X_train, y_train)
         predictions = mlp.predict(X_test)
         cr = classification_report(y_test, predictions,output_dict=True)
@@ -101,7 +101,7 @@ def test_two_hidden_layers():
     row = 2
     for i in range(1, 12):
         for j in range(1, 12):
-            mlp = MLPClassifier(hidden_layer_sizes=(i, j,), max_iter=1000,random_state=1)
+            mlp = MLPClassifier(hidden_layer_sizes=(i, j), max_iter=1000,random_state=1)
             mlp.fit(X_train, y_train)
             predictions = mlp.predict(X_test)
             cr = classification_report(y_test, predictions,output_dict=True)
@@ -116,7 +116,7 @@ def test_two_hidden_layers():
             row += 1
     wb.save(filename="result.xlsx")
 
-def test_activation(sizes=(4,)):
+def test_activation(sizes=(3,4)):
     wb = load_workbook(filename="result.xlsx")
     sheet = wb['activation']
     sheet['A1'] = f'Topology: {sizes}'
@@ -140,7 +140,7 @@ def test_activation(sizes=(4,)):
         row += 1
     wb.save(filename="result.xlsx")
     
-test_one_hidden_layer()
-test_two_hidden_layers()
-test_activation((3,4))
+# test_one_hidden_layer()
+# test_two_hidden_layers()
+# test_activation((3,4))
 

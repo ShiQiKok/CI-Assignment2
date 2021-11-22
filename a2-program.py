@@ -3,7 +3,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.impute import KNNImputer
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.neural_network import MLPClassifier
-from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import confusion_matrix, classification_report, roc_curve, auc
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -35,6 +35,18 @@ def visualise(mlp):
                 ax.plot([loc_neurons[l][i][0], loc_neurons[l+1][j][0]], [loc_neurons[l][i][1], loc_neurons[l+1][j][1]], 'white', linewidth=((w-weight_range[0])/(weight_range[1]-weight_range[0])*5+0.2)*1.2)
                 ax.plot([loc_neurons[l][i][0], loc_neurons[l+1][j][0]], [loc_neurons[l][i][1], loc_neurons[l+1][j][1]], 'grey', linewidth=(w-weight_range[0])/(weight_range[1]-weight_range[0])*5+0.2)
 
+def plot_ROC(gold_standard, prediction):
+    fpr, tpr, _ = roc_curve(gold_standard, prediction)
+
+    plt.figure()
+    plt.title("ROC Curve")
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.plot([0,1], [0,1], linestyle='--', color='black') ## major diagonal
+    plt.plot(fpr, tpr, color='orange', label='area={:.2f}'.format(auc(fpr, tpr)))
+    plt.fill_between(fpr,tpr, 0, facecolor='bisque')
+    plt.legend()
+    plt.show()
 
 data = pd.read_csv('heart.csv')
 categorical_input = ['Sex' , 'ChestPainType', 'RestingECG', 'ExerciseAngina', 'ST_Slope']
@@ -60,7 +72,7 @@ data = pd.DataFrame(imputer.fit_transform(data), columns=data.columns)
 
 X = data.drop(columns='HeartDisease')
 Y = data['HeartDisease']
-X_train, X_test, y_train, y_test = train_test_split(X, Y, train_size=0.8, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, Y, train_size=0.8, random_state=1)
 
 # Scale the input
 scaler = StandardScaler()
@@ -69,12 +81,14 @@ X_train = scaler.transform(X_train)
 X_test = scaler.transform(X_test)
 
 
-mlp = MLPClassifier(hidden_layer_sizes=(4), max_iter=1000)
+mlp = MLPClassifier(hidden_layer_sizes=(3, 4), activation='relu',max_iter=1000, random_state=1)
 mlp.fit(X_train, y_train)
 predictions = mlp.predict(X_test)
-print(confusion_matrix(y_test, predictions))
+cm = confusion_matrix(y_test, predictions)
+print(cm)
 print(classification_report(y_test, predictions))
-# visualise(mlp)
+visualise(mlp)
+plot_ROC(y_test, predictions)
 
 
 
